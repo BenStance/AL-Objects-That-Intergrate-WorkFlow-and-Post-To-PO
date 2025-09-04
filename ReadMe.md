@@ -18,8 +18,7 @@ This repository contains AL objects for a custom workflow solution in Microsoft 
 
 1. Clone the repository:
    ```sh
-   git clone https://github.com/<your-username>/<your-repo-name>.git
-   ```
+https://github.com/BenStance/AL-Objects-That-Intergrate-WorkFlow-and-Post-To-PO.git   ```
 2. Open the project in Visual Studio Code.
 3. Deploy to your Business Central environment.
 
