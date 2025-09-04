@@ -202,7 +202,7 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 ---
 
 **Version**: 1.0.0  
-**Last Updated**: 2024  
+**Last Updated**: 2025 
 **Compatibility**: Business Central 2022 Wave 2 and later
 
 For more information, please refer to the [documentation](Docs/) folder or create
