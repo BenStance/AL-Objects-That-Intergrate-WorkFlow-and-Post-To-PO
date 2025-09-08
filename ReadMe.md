@@ -138,7 +138,7 @@ This solution provides a complete end-to-end process for managing purchase reque
 ## 🔄 Workflow Status Flow
 
 ```
-Open → Pending → Approved → Completed
+Open → Pending → Approved
 ```
 
 - **Open**: Document is being prepared and can be edited
@@ -196,6 +196,7 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 ## 🙏 Acknowledgments
 
 - Microsoft Dynamics 365 Business Central team
+- Athena Core Technologies
 - AL developer community
 - Contributors and testers
 
