@@ -9,7 +9,8 @@ codeunit 50210 "RGP Custom Workflow Mgmt"
 
     procedure GetWorkflowCode(WorkflowCode: code[128]; RecRef: RecordRef): Code[128]
     begin
-        exit(DelChr(StrSubstNo(WorkflowCode, RecRef.Name), '=', ' '));
+        // Ensure the event name matches the format used in AddEventToLibrary and the workflow XML
+        exit(StrSubstNo(WorkflowCode, RecRef.Name));
     end;
 
     [IntegrationEvent(false, false)]
@@ -30,95 +31,33 @@ codeunit 50210 "RGP Custom Workflow Mgmt"
         WorkflowEventHandling: Codeunit "Workflow Event Handling";
     begin
         RecRef.Open(Database::"RGP Request Header");
-        WorkflowEventHandling.AddEventToLibrary(GetWorkflowCode(RUNWORKFLOWONSENDFORAPPROVALCODE, RecRef), Database::"RGP Request Header",
-          GetWorkflowEventDesc(WorkflowSendForApprovalEventDescTxt, RecRef), 0, false);
-        WorkflowEventHandling.AddEventToLibrary(GetWorkflowCode(RUNWORKFLOWONCANCELFORAPPROVALCODE, RecRef), Database::"RGP Request Header",
-          GetWorkflowEventDesc(WorkflowCancelForApprovalEventDescTxt, RecRef), 0, false);
+        // The event name will be RUNWORKFLOWONSENDRGPREQUESTHEADERFORAPPROVAL and RUNWORKFLOWONCANCELRGPREQUESTHEADERFORAPPROVAL
+        WorkflowEventHandling.AddEventToLibrary(
+            'RUNWORKFLOWONSENDRGPREQUESTHEADERFORAPPROVAL',
+            Database::"RGP Request Header",
+            GetWorkflowEventDesc(WorkflowSendForApprovalEventDescTxt, RecRef), 0, false);
+        WorkflowEventHandling.AddEventToLibrary(
+            'RUNWORKFLOWONCANCELRGPREQUESTHEADERFORAPPROVAL',
+            Database::"RGP Request Header",
+            GetWorkflowEventDesc(WorkflowCancelForApprovalEventDescTxt, RecRef), 0, false);
     end;
 
     // subscribe
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"RGP Custom Workflow Mgmt", 'OnSendWorkflowForApproval', '', false, false)]
     local procedure RunWorkflowOnSendWorkflowForApproval(var RecRef: RecordRef)
     begin
-        WorkflowMgt.HandleEvent(GetWorkflowCode(RUNWORKFLOWONSENDFORAPPROVALCODE, RecRef), RecRef);
+        WorkflowMgt.HandleEvent('RUNWORKFLOWONSENDRGPREQUESTHEADERFORAPPROVAL', RecRef);
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"RGP Custom Workflow Mgmt", 'OnCancelWorkflowForApproval', '', false, false)]
     local procedure RunWorkflowOnCancelWorkflowForApproval(var RecRef: RecordRef)
     begin
-        WorkflowMgt.HandleEvent(GetWorkflowCode(RUNWORKFLOWONCANCELFORAPPROVALCODE, RecRef), RecRef);
+        WorkflowMgt.HandleEvent('RUNWORKFLOWONCANCELRGPREQUESTHEADERFORAPPROVAL', RecRef);
     end;
 
     procedure GetWorkflowEventDesc(WorkflowEventDesc: Text; RecRef: RecordRef): Text
     begin
         exit(StrSubstNo(WorkflowEventDesc, RecRef.Name));
-    end;
-
-    procedure CreateRGPApprovalWorkflow()
-    var
-        Workflow: Record Workflow;
-        WorkflowStep: Record "Workflow Step";
-        WorkflowStepArgument: Record "Workflow Step Argument";
-        WorkflowResponseHandling: Codeunit "Workflow Response Handling";
-        RecRef: RecordRef;
-        StepID: Integer;
-    begin
-        // Check if workflow already exists
-        if Workflow.Get('RGP-REQUEST-APPROVAL') then
-            exit;
-
-        // Create the workflow
-        Workflow.Init();
-        Workflow.Code := 'RGP-REQUEST-APPROVAL';
-        Workflow.Description := 'RGP Request Approval Workflow';
-        // Workflow."Table ID" := Database::"RGP Request Header";
-        Workflow.Enabled := true;
-        // Workflow.Category := Workflow.Category::"Purchase Document"; // Use correct option value
-        Workflow.Insert();
-
-        // Step 1: When document is sent for approval
-        WorkflowStep.Init();
-        WorkflowStep."Workflow Code" := Workflow.Code;
-        WorkflowStep.ID := 10;
-        WorkflowStep.Type := WorkflowStep.Type::"Event";
-        RecRef.Open(Database::"RGP Request Header");
-        WorkflowStep."Function Name" := GetWorkflowCode(RUNWORKFLOWONSENDFORAPPROVALCODE, RecRef);
-        WorkflowStep.Insert();
-
-        // Step 2: Create approval request
-        WorkflowStep.Init();
-        WorkflowStep."Workflow Code" := Workflow.Code;
-        WorkflowStep.ID := 20;
-        WorkflowStep.Type := WorkflowStep.Type::Response;
-        WorkflowStep."Function Name" := WorkflowResponseHandling.CreateApprovalRequestsCode;
-        // WorkflowStep."Previous Step ID" := 10;
-        WorkflowStep.Insert();
-
-        WorkflowStepArgument.Init();
-        // WorkflowStepArgument."Workflow Step ID" := 20; // If this field does not exist, replace with correct field name
-        WorkflowStepArgument."Approver Type" := WorkflowStepArgument."Approver Type"::"Salesperson/Purchaser";
-        WorkflowStepArgument."Approver Limit Type" := WorkflowStepArgument."Approver Limit Type"::"Direct Approver";
-        WorkflowStepArgument.Insert();
-
-        // Step 3: When document is approved
-        WorkflowStep.Init();
-        WorkflowStep."Workflow Code" := Workflow.Code;
-        WorkflowStep.ID := 30;
-        WorkflowStep.Type := WorkflowStep.Type::Response;
-        WorkflowStep."Function Name" := WorkflowResponseHandling.SendApprovalRequestForApprovalCode;
-        // WorkflowStep."Previous Step ID" := 20;
-        WorkflowStep.Insert();
-
-        // Step 4: Release document when approved
-        WorkflowStep.Init();
-        WorkflowStep."Workflow Code" := Workflow.Code;
-        WorkflowStep.ID := 40;
-        WorkflowStep.Type := WorkflowStep.Type::Response;
-        WorkflowStep."Function Name" := WorkflowResponseHandling.ReleaseDocumentCode;
-        // WorkflowStep."Previous Step ID" := 30;
-        WorkflowStep.Insert();
-
-        Message('RGP Approval Workflow created successfully.');
     end;
 
     // handle the document

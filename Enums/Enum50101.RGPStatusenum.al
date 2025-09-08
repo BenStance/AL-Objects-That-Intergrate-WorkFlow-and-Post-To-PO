@@ -4,7 +4,7 @@ enum 50200 RGPStatusenum
 
 {
 
-Extensible = true;
+Extensible = false;
 Caption = 'RGP Status enum';
 
     

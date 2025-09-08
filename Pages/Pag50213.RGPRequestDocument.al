@@ -115,6 +115,22 @@ page 50213 RGPRequestDocument
                         end;
                     end;
                 }
+                action(Approvals)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Approvals';
+                    Image = Approvals;
+                    ToolTip = 'View approval requests.';
+                    Promoted = true;
+                    PromotedCategory = Process;
+                    PromotedIsBig = true;
+                    // Visible = HasApprovalEntries;
+
+                    trigger OnAction()
+                    begin
+                        ApprovalsMgmt.OpenApprovalEntriesPage(Rec.RecordId);
+                    end;
+                }
 
                 action(Reopen)
                 {
@@ -137,10 +153,7 @@ page 50213 RGPRequestDocument
                     end;
                 }
             }
-            // }
-
-            // area(Promoted)
-            // {
+            
             group("Approval")
             {
                 Caption = 'Approval';
@@ -150,7 +163,6 @@ page 50213 RGPRequestDocument
                 {
                     ApplicationArea = All;
                     Caption = 'Send Approval Request';
-                    // Enabled = not OpenApprovalEntriesExist and IsEditable;
                     Image = SendApprovalRequest;
                     ToolTip = 'Request approval of the document.';
                     Promoted = true;
@@ -187,21 +199,7 @@ page 50213 RGPRequestDocument
                         CustomWorkflowMgmt.OnCancelWorkflowForApproval(RecRef);
                     end;
                 }
-                action(Approvals)
-                {
-                    ApplicationArea = All;
-                    Caption = 'Approvals';
-                    Image = Approvals;
-                    ToolTip = 'View approval requests.';
-                    Promoted = true;
-                    PromotedCategory = Category5;
-                    Visible = HasApprovalEntries;
-
-                    trigger OnAction()
-                    begin
-                        ApprovalsMgmt.OpenApprovalEntriesPage(Rec.RecordId);
-                    end;
-                }
+                
 
                 action("Convert to Purchase Order")
                 {
