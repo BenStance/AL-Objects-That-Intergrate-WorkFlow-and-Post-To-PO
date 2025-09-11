@@ -1,17 +1,17 @@
 # RGP (Request for Goods Purchase) Workflow Solution for Business Central
 
-A comprehensive purchase request management system with integrated approval workflow and automatic purchase order generation for Microsoft Dynamics 365 Business Central.
+A comprehensive purchase request management system with integrated approval workflow and automatic purchase Quote generation for Microsoft Dynamics 365 Business Central.
 
 ## 📋 Overview
 
-This solution provides a complete end-to-end process for managing purchase requests, vendor selection, approval workflows, and automatic purchase order creation within Business Central. It streamlines the procurement process while maintaining full integration with standard Business Central functionality.
+This solution provides a complete end-to-end process for managing purchase requests, vendor selection, approval workflows, and automatic purchase quote creation within Business Central. It streamlines the procurement process while maintaining full integration with standard Business Central functionality.
 
 ## 🚀 Key Features
 
 - **📝 RGP Request Management**: Complete document handling for purchase requests
 - **🏢 Multi-Vendor Support**: Compare prices and select from multiple vendors
 - **✅ Approval Workflow**: Integrated approval process with status tracking
-- **🛒 Auto PO Generation**: Automatic purchase order creation from approved requests
+- **🛒 Auto PQ Generation**: Automatic purchase quote creation from approved requests
 - **⭐ Vendor Acceptance**: Vendor selection and acceptance tracking
 - **📊 Real-time Calculations**: Automatic VAT and total amount calculations
 - **🔐 Status-based Security**: Editable controls based on document status
@@ -33,7 +33,9 @@ This solution provides a complete end-to-end process for managing purchase reque
 │   └── 50211 RGP Request Vendor Subform.al
 ├── 📄 Codeunits/
 │   ├── 50210 RGP Custom Workflow Mgmt.al
-│   └── 50211 RGP Request to Purchase Order.al
+│   |── 50211 RGP Handle Request to Purchase quote.al
+|   └── 50212 RGP Request to Purchase quote.al
+|
 └── 📄 Enums/
     ├── RGP Status Enum.al
     └── RGP Line Types Enum.al
@@ -82,7 +84,7 @@ This solution provides a complete end-to-end process for managing purchase reque
    - Set up number series for "RFQ" (Request for Quotation)
 
 2. **Workflow Configuration**
-   - Go to: **Approval Workflows**
+   - Go to: **Workflows**
    - Enable the "RGP Request Approval Workflow"
 
 3. **User Setup**
@@ -122,18 +124,18 @@ This solution provides a complete end-to-end process for managing purchase reque
    - Status changes to **Approved** after successful approval
    - Document becomes ready for PO generation
 
-### Generating Purchase Orders
+### Generating Purchase quotes
 
 1. **Select Accepted Vendor**
    - Mark the chosen vendor as "Accepted" in the vendor subform
 
-2. **Create Purchase Order**
-   - Click "Convert to Purchase Order" action
+2. **Create Purchase quote**
+   - Click "Convert to Purchase quote" action
    - System automatically creates PO with all items
 
 3. **Completion**
-   - Status changes to **Completed**
-   - Purchase order number is recorded against the vendor
+   - Status changes to **Aproved**
+   - Purchase quote number is recorded against the vendor
 
 ## 🔄 Workflow Status Flow
 
@@ -144,7 +146,6 @@ Open → Pending → Approved
 - **Open**: Document is being prepared and can be edited
 - **Pending**: Sent for approval, awaiting review
 - **Approved**: Successfully approved, ready for PO creation
-- **Completed**: Purchase order has been created
 
 ## 🎯 Business Benefits
 
@@ -189,9 +190,6 @@ For support and questions:
 - 📧 Email: 23ycnsale@gmail.com
 - 🐛 Issues: GitHub.com
 
-## 📜 License
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
 
 ## 🙏 Acknowledgments
 
@@ -206,4 +204,3 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 **Last Updated**: 2025 
 **Compatibility**: Business Central 2022 Wave 2 and later
 
-For more information, please refer to the [documentation](Docs/) folder or create

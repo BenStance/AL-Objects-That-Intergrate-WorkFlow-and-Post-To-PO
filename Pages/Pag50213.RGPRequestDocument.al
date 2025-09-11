@@ -43,7 +43,7 @@ page 50213 RGPRequestDocument
                 {
                     ApplicationArea = All;
                     ToolTip = 'Specifies who requested this document.';
-                    Editable = IsEditable;
+                    Editable = false;
                 }
                 field("Shortcut Dimension 1 Code"; Rec."Shortcut Dimension 1 Code")
                 {
@@ -100,7 +100,7 @@ page 50213 RGPRequestDocument
                     Caption = 'Release';
                     ToolTip = 'Release the document to Pending status.';
                     Image = ReleaseDoc;
-                    Enabled = IsEditable;
+                    Enabled = IsEditable and not IsWorkflowEnabled;
                     Promoted = true;
                     PromotedCategory = Process;
                     PromotedIsBig = true;
@@ -112,6 +112,27 @@ page 50213 RGPRequestDocument
                             Rec.Status := Rec.Status::Pending;
                             Rec.Modify(true);
                             Message('Request %1 has been released and is now Pending approval.', Rec."Request No.");
+                        end;
+                    end;
+                }
+
+                action(Reopen)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Reopen';
+                    ToolTip = 'Reopen the document to Open status.';
+                    Image = ReOpen;
+                    Enabled = IsEditable and not IsWorkflowEnabled;
+                    Promoted = true;
+                    PromotedCategory = Process;
+
+                    trigger OnAction()
+                    begin
+                        if Confirm('Are you sure you want to reopen this request?') then begin
+                            Rec.TestField(Status, Rec.Status::Pending);
+                            Rec.Status := Rec.Status::Open;
+                            Rec.Modify(true);
+                            Message('Request %1 has been reopened.', Rec."Request No.");
                         end;
                     end;
                 }
@@ -132,116 +153,95 @@ page 50213 RGPRequestDocument
                     end;
                 }
 
-                action(Reopen)
-                {
-                    ApplicationArea = All;
-                    Caption = 'Reopen';
-                    ToolTip = 'Reopen the document to Open status.';
-                    Image = ReOpen;
-                    Enabled = not IsEditable and (Rec.Status = Rec.Status::Pending);
-                    Promoted = true;
-                    PromotedCategory = Process;
 
-                    trigger OnAction()
-                    begin
-                        if Confirm('Are you sure you want to reopen this request?') then begin
-                            Rec.TestField(Status, Rec.Status::Pending);
-                            Rec.Status := Rec.Status::Open;
-                            Rec.Modify(true);
-                            Message('Request %1 has been reopened.', Rec."Request No.");
+
+                group("Approval")
+                {
+                    Caption = 'Approval';
+                    Image = Approval;
+
+                    action(SendApprovalRequest)
+                    {
+                        ApplicationArea = All;
+                        Caption = 'Send Approval Request';
+                        Image = SendApprovalRequest;
+                        ToolTip = 'Request approval of the document.';
+                        Promoted = true;
+                        PromotedCategory = Process;
+                        PromotedIsBig = true;
+
+                        trigger OnAction()
+                        var
+                            CustomWorkflowMgmt: Codeunit "RGP Custom Workflow Mgmt";
+                            RecRef: RecordRef;
+                        begin
+                            RecRef.GetTable(Rec);
+                            if CustomWorkflowMgmt.CheckRGPRequestApprovalsWorkflowEnable(Rec) then
+                                CustomWorkflowMgmt.OnSendRGPRequestForApproval(Rec);
                         end;
-                    end;
+                    }
+
+                    action(CancelApprovalRequest)
+                    {
+                        ApplicationArea = Suite;
+                        Caption = 'Cancel Approval Request';
+                        Enabled = CanCancelApprovalForRecord;
+                        Image = CancelApprovalRequest;
+                        ToolTip = 'Cancel the approval request.';
+                        Promoted = true;
+                        PromotedCategory = Process;
+
+                        trigger OnAction()
+                        var
+                            CustomWorkflowMgmt: Codeunit "RGP Custom Workflow Mgmt";
+                            RecRef: RecordRef;
+                        begin
+                            RecRef.GetTable(Rec);
+                            CustomWorkflowMgmt.OnCancelRGPRequestForApproval(Rec);
+                        end;
+                    }
+
+
+                    action("Convert to Purchase Quote")
+                    {
+                        ApplicationArea = All;
+                        Caption = 'Convert to Purchase Quote';
+                        ToolTip = 'Create a purchase quote from this request for the accepted vendor.';
+                        Image = Quote;
+                        Enabled = EnableConvertToQuote;
+                        Promoted = true;
+                        PromotedCategory = Process;
+                        PromotedIsBig = true;
+
+                        trigger OnAction()
+                        var
+                            RGPRequestToPurchaseQuote: Codeunit "RGP Req to Purch Quote(Yes/No)"; // New codeunit
+                        begin
+                            RGPRequestToPurchaseQuote.Run(Rec);
+                        end;
+                    }
+                    action(Comment)
+                    {
+                        ApplicationArea = All;
+                        Caption = 'Comments';
+                        Image = ViewComments;
+                        ToolTip = 'View or add comments for the record.';
+                        Promoted = true;
+                        PromotedCategory = Category5;
+                        Visible = OpenApprovalEntriesExistCurrUser;
+
+                        trigger OnAction()
+                        begin
+                            ApprovalsMgmt.GetApprovalComment(Rec);
+                        end;
+                    }
+
                 }
             }
-            
-            group("Approval")
-            {
-                Caption = 'Approval';
-                Image = Approval;
 
-                action(SendApprovalRequest)
-                {
-                    ApplicationArea = All;
-                    Caption = 'Send Approval Request';
-                    Image = SendApprovalRequest;
-                    ToolTip = 'Request approval of the document.';
-                    Promoted = true;
-                    PromotedCategory = Process;
-                    PromotedIsBig = true;
 
-                    trigger OnAction()
-                    var
-                        CustomWorkflowMgmt: Codeunit "RGP Custom Workflow Mgmt";
-                        RecRef: RecordRef;
-                    begin
-                        RecRef.GetTable(Rec);
-                        if CustomWorkflowMgmt.CheckApprovalsWorkflowEnabled(RecRef) then
-                            CustomWorkflowMgmt.OnSendWorkflowForApproval(RecRef);
-                    end;
-                }
-
-                action(CancelApprovalRequest)
-                {
-                    ApplicationArea = Suite;
-                    Caption = 'Cancel Approval Request';
-                    Enabled = CanCancelApprovalForRecord;
-                    Image = CancelApprovalRequest;
-                    ToolTip = 'Cancel the approval request.';
-                    Promoted = true;
-                    PromotedCategory = Process;
-
-                    trigger OnAction()
-                    var
-                        CustomWorkflowMgmt: Codeunit "RGP Custom Workflow Mgmt";
-                        RecRef: RecordRef;
-                    begin
-                        RecRef.GetTable(Rec);
-                        CustomWorkflowMgmt.OnCancelWorkflowForApproval(RecRef);
-                    end;
-                }
-                
-
-                action("Convert to Purchase Order")
-                {
-                    ApplicationArea = All;
-                    Caption = 'Convert to Purchase Order';
-                    ToolTip = 'Create a purchase order from this request for the accepted vendor.';
-                    Image = Order;
-                    Enabled = Rec.Status = Rec.Status::Approved;
-                    Promoted = true;
-                    PromotedCategory = Process;
-                    PromotedIsBig = true;
-
-                    trigger OnAction()
-                    var
-                        RGPRequestToPurchase: Codeunit "RGP Request to Purchase Order";
-                    begin
-                        RGPRequestToPurchase.CreatePurchaseOrderForAcceptedVendor(Rec);
-                        // The success message is now handled inside the codeunit
-                    end;
-                }
-                action(Comment)
-                {
-                    ApplicationArea = All;
-                    Caption = 'Comments';
-                    Image = ViewComments;
-                    ToolTip = 'View or add comments for the record.';
-                    Promoted = true;
-                    PromotedCategory = Category5;
-                    Visible = OpenApprovalEntriesExistCurrUser;
-
-                    trigger OnAction()
-                    begin
-                        ApprovalsMgmt.GetApprovalComment(Rec);
-                    end;
-                }
-
-            }
         }
-
-
     }
-
     trigger OnAfterGetCurrRecord()
     begin
         SetEditable();
@@ -266,16 +266,25 @@ page 50213 RGPRequestDocument
         SetEditable();
     end;
 
+
     local procedure SetEditable()
+    var
+        WorkflowManagement: Codeunit "Workflow Management";
     begin
         IsEditable := Rec.Status = Rec.Status::Open;
+        EnableConvertToQuote := (Rec.Status = Rec.Status::Approved);
+        IsWorkflowEnabled := WorkflowManagement.CanExecuteWorkflow(Rec, RGPCustomWorkflowMgmt.RunWorkflowOnSendRGPRequestForApprovalCode());
     end;
 
     var
         IsEditable: Boolean;
+
+        IsWorkflowEnabled: Boolean;
+        RGPCustomWorkflowMgmt: Codeunit "RGP Custom Workflow Mgmt";
         OpenApprovalEntriesExistCurrUser: Boolean;
         OpenApprovalEntriesExist: Boolean;
         CanCancelApprovalForRecord: Boolean;
         HasApprovalEntries: Boolean;
         ApprovalsMgmt: Codeunit "Approvals Mgmt.";
+        EnableConvertToQuote: Boolean;
 }

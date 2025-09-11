@@ -73,7 +73,7 @@ table 50211 "RGP Request Item Line"
         {
             Caption = 'Location Code';
             TableRelation = Location.Code;
-            DataClassification = CustomerContent;
+            DataClassification = CustomerContent;        
         }
         
         field(7; "Unit of Measure Code"; Code[10])
@@ -174,6 +174,11 @@ table 50211 "RGP Request Item Line"
                 
                 UpdateLineAmounts();
             end;
+        }
+        field(16; "Comments";Text[250])
+        {
+            Caption = 'Comments';
+            DataClassification = CustomerContent;
         }
     }
 

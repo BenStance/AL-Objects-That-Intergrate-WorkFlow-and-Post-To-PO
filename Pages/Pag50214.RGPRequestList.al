@@ -50,34 +50,6 @@ page 50214 "RGP Request List"
         }
     }
 
-    actions
-    {
-        area(Processing)
-        {
-            action(NewRequest)
-            {
-                Caption = 'New Request';
-                ApplicationArea = All;
-                Image = NewDocument;
-                Promoted = true;
-                PromotedCategory = New;
-                PromotedIsBig = true;
-                ToolTip = 'Create a new RGP Request.';
-
-                trigger OnAction()
-                var
-                    RGPRequestHeader: Record "RGP Request Header";
-                    RGPRequestDocument: Page RGPRequestDocument;
-                begin
-                    RGPRequestHeader.Init();
-                    RGPRequestHeader.Insert(true);
-                    RGPRequestDocument.SetRecord(RGPRequestHeader);
-                    RGPRequestDocument.Run();
-                end;
-            }
-        }
-    }
-
     trigger OnOpenPage()
     begin
         // Shows requests from the last 30 days by default

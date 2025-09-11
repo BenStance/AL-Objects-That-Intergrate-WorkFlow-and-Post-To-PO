@@ -1,150 +1,207 @@
 codeunit 50210 "RGP Custom Workflow Mgmt"
 {
-    procedure CheckApprovalsWorkflowEnabled(var RecRef: RecordRef): Boolean
+    //Rise events for workflow
+    [IntegrationEvent(false, false)]
+    procedure OnSendRGPRequestForApproval(var RGPRequestHeader: Record "RGP Request Header")
     begin
-        if not WorkflowMgt.CanExecuteWorkflow(RecRef, GetWorkflowCode(RUNWORKFLOWONSENDFORAPPROVALCODE, RecRef)) then
-            Error(NoWorkflowEnabledErr);
+    end;
+
+    [IntegrationEvent(false, false)]
+    procedure OnCancelRGPRequestForApproval(var RGPRequestHeader: Record "RGP Request Header")
+    begin
+    end;
+
+    //Create events for WF
+    procedure RunWorkflowOnSendRGPRequestForApprovalCode(): Code[128]
+    begin
+        exit(UpperCase('RunWorkflowOnSendRGPRequestForApproval'))
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"RGP Custom Workflow Mgmt", 'OnSendRGPRequestForApproval', '', true, true)]
+    local procedure RunWorkflowOnSendRGPRequestForApproval(var RGPRequestHeader: Record "RGP Request Header")
+    begin
+        WorkflowManagement.HandleEvent(RunWorkflowOnSendRGPRequestForApprovalCode, RGPRequestHeader);
+    end;
+
+    procedure RunWorkflowOnCancelRGPRequestApprovalCode(): Code[128]
+    begin
+        exit(UpperCase('RunWorkflowOnCancelRGPRequestApproval'));
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"RGP Custom Workflow Mgmt", 'OnCancelRGPRequestForApproval', '', true, true)]
+    local procedure RunWorkflowOnCancelRGPRequestApproval(var RGPRequestHeader: Record "RGP Request Header")
+    begin
+        WorkflowManagement.HandleEvent(RunWorkflowOnCancelRGPRequestApprovalCode, RGPRequestHeader);
+    end;
+
+    //Add events to library
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Workflow Event Handling", 'OnAddWorkflowEventsToLibrary', '', true, true)]
+    local procedure OnAddWorkflowEventsToLibrary()
+    begin
+        WorkflowEventHandling.AddEventToLibrary(RunWorkflowOnSendRGPRequestForApprovalCode, Database::"RGP Request Header", 'The RGP Request approval request has been sent', 0, false);
+        WorkflowEventHandling.AddEventToLibrary(RunWorkflowOnCancelRGPRequestApprovalCode, Database::"RGP Request Header", 'The RGP Request approval request has been Cancelled', 0, false);
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Workflow Event Handling", 'OnAddWorkflowEventPredecessorsToLibrary', '', true, true)]
+    local procedure OnAddWorkflowEventPredecessorsToLibrary(EventFunctionName: Code[128])
+    begin
+        case EventFunctionName of
+            RunWorkflowOnCancelRGPRequestApprovalCode:
+                WorkflowEventHandling.AddEventPredecessor(RunWorkflowOnCancelRGPRequestApprovalCode, RunWorkflowOnSendRGPRequestForApprovalCode);
+            WorkflowEventHandling.RunWorkflowOnApproveApprovalRequestCode:
+                WorkflowEventHandling.AddEventPredecessor(WorkflowEventHandling.RunWorkflowOnApproveApprovalRequestCode, RunWorkflowOnSendRGPRequestForApprovalCode);
+            WorkflowEventHandling.RunWorkflowOnRejectApprovalRequestCode:
+                WorkflowEventHandling.AddEventPredecessor(WorkflowEventHandling.RunWorkflowOnRejectApprovalRequestCode, RunWorkflowOnSendRGPRequestForApprovalCode);
+            WorkflowEventHandling.RunWorkflowOnDelegateApprovalRequestCode:
+                WorkflowEventHandling.AddEventPredecessor(WorkflowEventHandling.RunWorkflowOnDelegateApprovalRequestCode, RunWorkflowOnSendRGPRequestForApprovalCode);
+        end;
+    end;
+
+    //Check workflow
+    procedure CheckRGPRequestApprovalsWorkflowEnable(var RGPRequestHeader: Record "RGP Request Header"): Boolean
+    begin
+        if Not WorkflowManagement.CanExecuteWorkflow(RGPRequestHeader, RunWorkflowOnSendRGPRequestForApprovalCode()) then
+            Error(NoWorkflowEnabledTxt);
         exit(true);
     end;
 
-    procedure GetWorkflowCode(WorkflowCode: code[128]; RecRef: RecordRef): Code[128]
-    begin
-        // Ensure the event name matches the format used in AddEventToLibrary and the workflow XML
-        exit(StrSubstNo(WorkflowCode, RecRef.Name));
-    end;
-
-    [IntegrationEvent(false, false)]
-    procedure OnSendWorkflowForApproval(var RecRef: RecordRef)
-    begin
-    end;
-
-    [IntegrationEvent(false, false)]
-    procedure OnCancelWorkflowForApproval(var RecRef: RecordRef)
-    begin
-    end;
-
-    // Add events to the library
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Workflow Event Handling", 'OnAddWorkflowEventsToLibrary', '', false, false)]
-    local procedure OnAddWorkflowEventsToLibrary()
-    var
-        RecRef: RecordRef;
-        WorkflowEventHandling: Codeunit "Workflow Event Handling";
-    begin
-        RecRef.Open(Database::"RGP Request Header");
-        // The event name will be RUNWORKFLOWONSENDRGPREQUESTHEADERFORAPPROVAL and RUNWORKFLOWONCANCELRGPREQUESTHEADERFORAPPROVAL
-        WorkflowEventHandling.AddEventToLibrary(
-            'RUNWORKFLOWONSENDRGPREQUESTHEADERFORAPPROVAL',
-            Database::"RGP Request Header",
-            GetWorkflowEventDesc(WorkflowSendForApprovalEventDescTxt, RecRef), 0, false);
-        WorkflowEventHandling.AddEventToLibrary(
-            'RUNWORKFLOWONCANCELRGPREQUESTHEADERFORAPPROVAL',
-            Database::"RGP Request Header",
-            GetWorkflowEventDesc(WorkflowCancelForApprovalEventDescTxt, RecRef), 0, false);
-    end;
-
-    // subscribe
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"RGP Custom Workflow Mgmt", 'OnSendWorkflowForApproval', '', false, false)]
-    local procedure RunWorkflowOnSendWorkflowForApproval(var RecRef: RecordRef)
-    begin
-        WorkflowMgt.HandleEvent('RUNWORKFLOWONSENDRGPREQUESTHEADERFORAPPROVAL', RecRef);
-    end;
-
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"RGP Custom Workflow Mgmt", 'OnCancelWorkflowForApproval', '', false, false)]
-    local procedure RunWorkflowOnCancelWorkflowForApproval(var RecRef: RecordRef)
-    begin
-        WorkflowMgt.HandleEvent('RUNWORKFLOWONCANCELRGPREQUESTHEADERFORAPPROVAL', RecRef);
-    end;
-
-    procedure GetWorkflowEventDesc(WorkflowEventDesc: Text; RecRef: RecordRef): Text
-    begin
-        exit(StrSubstNo(WorkflowEventDesc, RecRef.Name));
-    end;
-
-    // handle the document
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Workflow Response Handling", 'OnOpenDocument', '', false, false)]
-    local procedure OnOpenDocument(RecRef: RecordRef; var Handled: Boolean)
-    var
-        RGPRequestHeader: Record "RGP Request Header";
-    begin
-        case RecRef.Number of
-            Database::"RGP Request Header":
-                begin
-                    RecRef.SetTable(RGPRequestHeader);
-                    RGPRequestHeader.Validate(Status, RGPRequestHeader.Status::Open);
-                    RGPRequestHeader.Modify(true);
-                    Handled := true;
-                end;
-        end;
-    end;
-
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Approvals Mgmt.", 'OnSetStatusToPendingApproval', '', false, false)]
-    local procedure OnSetStatusToPendingApproval(RecRef: RecordRef; var Variant: Variant; var IsHandled: Boolean)
-    var
-        RGPRequestHeader: Record "RGP Request Header";
-    begin
-        case RecRef.Number of
-            Database::"RGP Request Header":
-                begin
-                    RecRef.SetTable(RGPRequestHeader);
-                    RGPRequestHeader.Validate(Status, RGPRequestHeader.Status::Pending);
-                    RGPRequestHeader.Modify(true);
-                    Variant := RGPRequestHeader;
-                    IsHandled := true;
-                end;
-        end;
-    end;
-
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Approvals Mgmt.", 'OnPopulateApprovalEntryArgument', '', false, false)]
-    local procedure OnPopulateApprovalEntryArgument(var RecRef: RecordRef; var ApprovalEntryArgument: Record "Approval Entry"; WorkflowStepInstance: Record "Workflow Step Instance")
+    local procedure OnPopulateApprovalEntryArgument(var ApprovalEntryArgument: Record "Approval Entry"; var RecRef: RecordRef; WorkflowStepInstance: Record "Workflow Step Instance")
     var
         RGPRequestHeader: Record "RGP Request Header";
     begin
-        case RecRef.Number of
-            Database::"RGP Request Header":
-                begin
-                    RecRef.SetTable(RGPRequestHeader);
-                    ApprovalEntryArgument."Document No." := RGPRequestHeader."Request No.";
-                end;
+        if RecRef.Number = database::"RGP Request Header" then begin
+            RecRef.SetTable(RGPRequestHeader);
+            ApprovalEntryArgument."Document No." := RGPRequestHeader."Request No.";
+        end;
+    end;
+    //responses handled in workflowresponseEXT codeunit
+
+    //add librabert
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Workflow Response Handling", 'OnAddWorkflowResponsePredecessorsToLibrary', '', false, false)]
+    local procedure OnAddWorkflowResponsePredecessorsToLibrary(ResponseFunctionName: Code[128])
+    var
+        WorkflowResponseHandling: Codeunit "Workflow Response Handling";
+    begin
+        case ResponseFunctionName of
+            WorkflowResponseHandling.SetStatusToPendingApprovalCode():
+                WorkflowResponseHandling.AddResponsePredecessor(WorkflowResponseHandling.SetStatusToPendingApprovalCode, RunWorkflowOnSendRGPRequestForApprovalCode());
+            WorkflowResponseHandling.SendApprovalRequestForApprovalCode:
+                WorkflowResponseHandling.AddResponsePredecessor(WorkflowResponseHandling.SendApprovalRequestForApprovalCode, RunWorkflowOnSendRGPRequestForApprovalCode);
+            WorkflowResponseHandling.CancelAllApprovalRequestsCode:
+                WorkflowResponseHandling.AddResponsePredecessor(WorkflowResponseHandling.CancelAllApprovalRequestsCode, RunWorkflowOnCancelRGPRequestApprovalCode());
+            WorkflowResponseHandling.OpenDocumentCode:
+                WorkflowResponseHandling.AddResponsePredecessor(WorkflowResponseHandling.OpenDocumentCode, RunWorkflowOnCancelRGPRequestApprovalCode);
         end;
     end;
 
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Workflow Response Handling", 'OnReleaseDocument', '', false, false)]
-    local procedure OnReleaseDocument(RecRef: RecordRef; var Handled: Boolean)
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Approvals Mgmt.", OnSetStatusToPendingApproval, '', false, false)]
+    local procedure OnSetStatusToPendingApproval(var Variant: Variant; RecRef: RecordRef; var IsHandled: Boolean)
+    var
+        RGPHdr: Record "RGP Request Header";
+    begin
+        if RecRef.Number <> Database::"RGP Request Header" then
+            exit;
+        RecRef.SetTable(RGPHdr);
+        RGPHdr.Validate(Status, RGPHdr.Status::Pending);
+        RGPHdr.Modify(true);
+        Variant := RGPHdr;
+        IsHandled := true;
+    end;
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Workflow Response Handling", OnReleaseDocument, '', false, false)]
+    local procedure OnReleaseDocument(RecRef: RecordRef;var Handled: Boolean)
+    var
+        RGPHdr: Record "RGP Request Header";
+    begin
+        if RecRef.Number <> Database::"RGP Request Header" then
+            exit;
+             RecRef.SetTable(RGPHdr);
+        RGPHdr.Validate(Status, RGPHdr.Status::Approved);
+        RGPHdr.Modify(true);
+        Handled := true;
+        // RecRef.SetTable(RGPHdr);
+
+        
+    end;
+    
+     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Workflow Response Handling", OnOpenDocument, '', false, false)]
+    local procedure OnOpenDocument(RecRef: RecordRef;var Handled: Boolean)
+    var
+        RGPHdr: Record "RGP Request Header";
+    begin
+        if RecRef.Number <> Database::"RGP Request Header" then
+            exit;
+             RecRef.SetTable(RGPHdr);
+        RGPHdr.Validate(Status, RGPHdr.Status::Open);
+        RGPHdr.Modify(true);
+        Handled := true;
+        // RecRef.SetTable(RGPHdr);
+
+        
+    end;
+
+
+
+
+
+
+
+
+
+
+    //<< Create Template for RGP Request workflow
+    procedure InsertRGPRequestWorkFlowTemplate()
+    var
+        AppEntry: Record "Approval Entry";
+        workflow: Record Workflow;
+    begin
+        WorkFlowSetup.InsertTableRelation(Database::"RGP Request Header", 0, Database::"Approval Entry", AppEntry.FieldNo("Record ID to Approve"));
+        WorkFlowSetup.InsertWorkflowTemplate(workflow, RGPRequestWFCodeTxt, RGPRequestWFDescTxt, RGPRequestCodeTxt);
+        InsertRGPRequestWorkflowDetails(workflow);
+        WorkFlowSetup.MarkWorkflowAsTemplate(workflow);
+        Message('workflow template created');
+    end;
+
+    local procedure InsertRGPRequestWorkflowDetails(var workflow: Record Workflow)
+    var
+
+        WorkflowStepArgument: Record 1523;
+        BlankDateFormula: DateFormula;
+        WorkflowResponseHandling: Codeunit 1521;
+        RGPRequestHeader: Record "RGP Request Header";
+    Begin
+        WorkflowSetup.InitWorkflowStepArgument(WorkflowStepArgument, WorkflowStepArgument."Approver Type"::Approver, WorkflowStepArgument."Approver Limit Type"::"Direct Approver",
+        0, '', BlankDateFormula, TRUE);
+
+        WorkflowSetup.InsertDocApprovalWorkflowSteps(Workflow,
+        BuildRGPRequestTypeConditions(RGPRequestHeader.Status::Open),
+        RunWorkflowOnSendRGPRequestForApprovalCode(),
+        BuildRGPRequestTypeConditions(RGPRequestHeader.Status::Pending),
+        RunWorkflowOnCancelRGPRequestApprovalCode(),
+        WorkflowStepArgument,
+        TRUE);
+
+    End;
+
+    local procedure BuildRGPRequestTypeConditions(Status: Integer): Text
     var
         RGPRequestHeader: Record "RGP Request Header";
     begin
-        case RecRef.Number of
-            Database::"RGP Request Header":
-                begin
-                    RecRef.SetTable(RGPRequestHeader);
-                    RGPRequestHeader.Validate(Status, RGPRequestHeader.Status::Approved);
-                    RGPRequestHeader.Modify(true);
-                    Handled := true;
-                end;
-        end;
+        RGPRequestHeader.SetRange(Status, Status);
+        EXIT(STRSUBSTNO(RGPRequestTypeCondTxt, WorkflowSetup.Encode(RGPRequestHeader.GETVIEW(FALSE))));
     end;
 
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Approvals Mgmt.", 'OnRejectApprovalRequest', '', false, false)]
-    local procedure OnRejectApprovalRequest(var ApprovalEntry: Record "Approval Entry")
-    var
-        RGPRequestHeader: Record "RGP Request Header";
-    begin
-        case ApprovalEntry."Table ID" of
-            Database::"RGP Request Header":
-                begin
-                    if RGPRequestHeader.Get(ApprovalEntry."Document No.") then begin
-                        RGPRequestHeader.Validate(Status, RGPRequestHeader.Status::Open); // Changed from Rejected to Open
-                        RGPRequestHeader.Modify(true);
-                    end;
-                end;
-        end;
-    end;
+    //>> End;
 
     var
-        WorkflowMgt: Codeunit "Workflow Management";
-        RUNWORKFLOWONSENDFORAPPROVALCODE: Label 'RUNWORKFLOWONSEND%1FORAPPROVAL';
-        RUNWORKFLOWONCANCELFORAPPROVALCODE: Label 'RUNWORKFLOWONCANCEL%1FORAPPROVAL';
-        NoWorkflowEnabledErr: Label 'No approval workflow for this record type is enabled.';
-        WorkflowSendForApprovalEventDescTxt: Label 'Approval of %1 is requested.';
-        WorkflowCancelForApprovalEventDescTxt: Label 'Approval of %1 is canceled.';
+        WorkflowManagement: codeunit "Workflow Management";
+        WorkflowEventHandling: Codeunit "Workflow Event Handling";
+        WorkFlowSetup: Codeunit "Workflow Setup";
+        NoWorkflowEnabledTxt: Label 'No approval workflow for this record type is enabled.';
+        RGPRequestCodeTxt: Label 'RGP';
+        RGPRequestWFCodeTxt: Label 'RGPAPW-002';
+        RGPRequestWFDescTxt: Label 'RGP Request Workflow 002';
+        RGPRequestTypeCondTxt: Label '<?xml version = "1.0" encoding="utf-8" standalone="yes"?><ReportParameters><DataItems><DataItem name="RGP Request Header">%1</DataItem></DataItems></ReportParameters>';
+
 }

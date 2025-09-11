@@ -41,10 +41,14 @@ table 50210 "RGP Request Header"
         {
             Caption = 'Requested By';
             DataClassification = CustomerContent;
+            Editable=false;
+            
+            
         }
         field(6; "Shortcut Dimension 1 Code"; Code[20])
         {
             Caption = 'Shortcut Dimension 1 Code';
+           CaptionClass = '1,2,1';
             DataClassification = CustomerContent;
             TableRelation = "Dimension Value".Code where("Global Dimension No." = const(1), Blocked = const(false));
 
@@ -52,6 +56,7 @@ table 50210 "RGP Request Header"
         field(7; "Shortcut Dimension 2 Code"; Code[20])
         {
             Caption = 'Shortcut Dimension 2 Code';
+            CaptionClass = '1,2,2';
             DataClassification = CustomerContent;
             TableRelation = "Dimension Value".Code where("Global Dimension No." = const(2), Blocked = const(false));
 
@@ -70,6 +75,29 @@ table 50210 "RGP Request Header"
         {
             Description = 'No Series';
         }
+        // Change the field name and/or TableRelation
+        field(11; "Purchase Order No."; Code[20]) // Renamed for clarity
+        {
+            Caption = 'Purchase Quote No.';
+            DataClassification = CustomerContent;
+            Editable = false;
+            TableRelation = "Purchase Header"."No." where("Document Type" = const(Order)); 
+        }
+        field(12; "Purchase Quote No."; Code[20]) // Renamed for clarity
+        {
+            Caption = 'Purchase Quote No.';
+            DataClassification = CustomerContent;
+            Editable = false;
+            TableRelation = "Purchase Header"."No." where("Document Type" = const(Quote)); // Changed to Quote
+        }
+        field(13; "Approval Status"; Option)
+        {
+            Caption = 'Approval Status';
+            OptionMembers = Open,"Pending Approval",Approved,Rejected;
+            OptionCaption = 'Open,Pending Approval,Approved,Rejected';
+            DataClassification = CustomerContent;
+            Editable = false;
+        }
     }
 
     keys
@@ -85,6 +113,8 @@ table 50210 "RGP Request Header"
 
 
     trigger OnInsert()
+    var
+        userSetup: Record "User Setup";
     begin
         if "Request No." = '' then begin
             PurchasesPayablesSetup.Get();
@@ -94,6 +124,10 @@ table 50210 "RGP Request Header"
             "Request Date" := Today();
             Status := Status::Open;
         end;
+
+        if userSetup.Get(UserId()) then
+            "Requested By" := userSetup."User ID";        
+
     end;
 
 

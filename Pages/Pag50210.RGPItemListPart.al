@@ -29,6 +29,13 @@ page 50210 "RGP Request Item Subform"
                     ToolTip = 'Specifies the description of the item.';
                     Editable = IsEditable;
                 }
+
+                field("Location Code";Rec."Location Code")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Specifies the location code.';
+                    Editable = IsEditable;
+                }
                 
                 field("Unit of Measure Code"; Rec."Unit of Measure Code")
                 {
@@ -42,38 +49,19 @@ page 50210 "RGP Request Item Subform"
                     ToolTip = 'Specifies the quantity requested.';
                     Editable = IsEditable;
                 }
-                 field("VAT %"; Rec."VAT %")
-                {
-                    ApplicationArea = All;
-                    ToolTip = 'Specifies the VAT percentage.';
-                    Editable = IsEditable;
-                }
+                
                 field("Unit Price"; Rec."Unit Price")
                 {
                     ApplicationArea = All;
                     ToolTip = 'Specifies the unit price.';
                     Editable = IsEditable;
                 }
-               
-                field("Total Amount Excl. VAT";Rec."Total Amount Excl. VAT")
-                {
-                    ApplicationArea = All;
-                    ToolTip = 'Specifies the total amount excluding VAT.';
-                    Editable = false;
-                }
-                field("VAT Amount";Rec."VAT Amount")
-                {
-                    ApplicationArea = All;
-                    ToolTip = 'Specifies the VAT amount.';
-                    Editable = false;
-                }
-                field("Total Amount Incl. VAT";Rec."Total Amount Incl. VAT")
-                {
-                    ApplicationArea = All;
-                    ToolTip = 'Specifies the total amount including VAT.';
-                    Editable = false;
-                }
-                
+
+                field(Comments;Rec.Comments){
+                    ApplicationArea=All;
+                    ToolTip='Specifies the comments.';
+                    Editable=IsEditable;
+                }                
             }
         }
     }

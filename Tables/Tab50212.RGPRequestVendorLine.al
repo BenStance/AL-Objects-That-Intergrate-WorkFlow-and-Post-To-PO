@@ -116,20 +116,7 @@ table 50212 "RGP Request Vendor Line"
             Caption = 'Accepted';
             DataClassification = CustomerContent;
 
-            // trigger OnValidate()
-            // var
-            //     RGPRequestVendorLine: Record "RGP Request Vendor Line";
-            // begin
-            //     if Accepted then begin
-            //         // Ensure only one vendor is accepted per request
-            //         RGPRequestVendorLine.Reset();
-            //         RGPRequestVendorLine.SetRange("Request No.", "Request No.");
-            //         RGPRequestVendorLine.SetRange(Accepted, true);
-            //         RGPRequestVendorLine.SetFilter("Line No.", '<>%1', "Line No.");
-            //         if RGPRequestVendorLine.FindFirst() then
-            //             Error('Only one vendor can be accepted per request. Vendor %1 is already accepted.', RGPRequestVendorLine."Vendor No.");
-            //     end;
-            // end;
+            
         }
         field(16; "Acceptance Date"; Date)
         {
@@ -160,6 +147,13 @@ table 50212 "RGP Request Vendor Line"
             DataClassification = CustomerContent;
             Editable = false;
             TableRelation = "Purchase Header"."No." where("Document Type" = const(Order));
+        }
+        field(21; "Purchase Quote No."; Code[20]) 
+        {
+            Caption = 'Purchase Quote No.';
+            DataClassification = CustomerContent;
+            Editable = false;
+            TableRelation = "Purchase Header"."No." where("Document Type" = const(Quote)); // Changed to Quote
         }
     }
 
