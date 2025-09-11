@@ -188,7 +188,7 @@ Open → Pending → Approved
 For support and questions:
 
 - 📧 Email: benedict@act-ltd.com
-- 🐛 Issues: GitHub.com
+- 🐛 Issues: support@act-ltd.com
 
 
 ## 🙏 Acknowledgments
