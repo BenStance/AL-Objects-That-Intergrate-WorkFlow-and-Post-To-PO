@@ -187,7 +187,7 @@ Open → Pending → Approved
 
 For support and questions:
 
-- 📧 Email: 23ycnsale@gmail.com
+- 📧 Email: benedict@act-ltd.com
 - 🐛 Issues: GitHub.com
 
 
