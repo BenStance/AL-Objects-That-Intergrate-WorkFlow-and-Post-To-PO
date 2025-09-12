@@ -16,6 +16,10 @@ This solution provides a complete end-to-end process for managing purchase reque
 - **📊 Real-time Calculations**: Automatic VAT and total amount calculations
 - **🔐 Status-based Security**: Editable controls based on document status
 - **📋 Dimension Support**: Full dimension integration for financial tracking
+- **📑 RGP Request Report**: Printable requisition report with RDLC layout
+- **🔗 Data Flow to Quotes/Orders**: RGP fields (Request No., Requested By, Request Date, Quantity) flow automatically into Purchase Header and Purchase Lines
+- **📂 Related Documents**: Quick access to created Purchase Quotes and Orders directly from the request document
+
 
 ## 🏗️ Architecture
 
@@ -39,6 +43,18 @@ This solution provides a complete end-to-end process for managing purchase reque
 └── 📄 Enums/
     ├── RGP Status Enum.al
     └── RGP Line Types Enum.al
+    ├── 📄 Reports/
+│   └── 50214 RGP Request Document.al
+│
+├── 📄 TableExtensions/
+│   ├── 50213 RGPPurcHeaderExt.al
+│   └── 50214 RGPPurchLineExt.al
+│
+├── 📄 PageExtensions/
+│   ├── 50214 RGPPurchaseQuoteExt.al
+│   ├── 50215 RGPPurchaseOrderExt.al
+│   └── 50216 RGPPurchaseQuoteSubformExt.al
+
 ```
 
 ### Data Model
@@ -134,8 +150,10 @@ This solution provides a complete end-to-end process for managing purchase reque
    - System automatically creates PO with all items
 
 3. **Completion**
-   - Status changes to **Aproved**
+   - Status changes to **Approved**
    - Purchase quote number is recorded against the vendor
+   - All request details flow into the Purchase Quote (header + line fields)
+
 
 ## 🔄 Workflow Status Flow
 
@@ -146,6 +164,12 @@ Open → Pending → Approved
 - **Open**: Document is being prepared and can be edited
 - **Pending**: Sent for approval, awaiting review
 - **Approved**: Successfully approved, ready for PO creation
+
+### Viewing Related Purchase Documents
+
+- From the RGP Request Document page, use the **Quotes/Orders** actions
+- Instantly open and review Purchase Quotes and Purchase Orders linked to the request
+
 
 ## 🎯 Business Benefits
 

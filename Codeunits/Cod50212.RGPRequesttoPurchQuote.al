@@ -78,6 +78,10 @@ codeunit 50212 "RGP Request to Purch Quote"
                 RGPRequestHeader."Request No.", RGPRequestVendorLine."Vendor No."),
                 1, MaxStrLen(PurchQuoteHeader."Your Reference"));
         PurchQuoteHeader."RGP Request No." := RGPRequestHeader."Request No.";
+        PurchQuoteHeader."RGP Request No." := RGPRequestHeader."Request No.";  
+        PurchQuoteHeader."Requested By" := RGPRequestHeader."Requested By";  
+        PurchQuoteHeader."Request Date" := RGPRequestHeader."Request Date";
+
 
         OnCreatePurchHeaderOnBeforePurchQuoteHeaderInsert(PurchQuoteHeader, RGPRequestHeader, RGPRequestVendorLine);
         PurchQuoteHeader.Insert(true);
@@ -121,6 +125,12 @@ codeunit 50212 "RGP Request to Purch Quote"
                 PurchQuoteLine.Validate("Unit of Measure Code", RGPRequestItemLine."Unit of Measure Code");
                 PurchQuoteLine.Validate("Shortcut Dimension 1 Code", RGPRequestHeader."Shortcut Dimension 1 Code");
                 PurchQuoteLine.Validate("Shortcut Dimension 2 Code", RGPRequestHeader."Shortcut Dimension 2 Code");
+
+                PurchQuoteHeader."RGP Request No." := RGPRequestHeader."Request No.";
+                PurchQuoteLine."RGP Request No." := PurchQuoteHeader."RGP Request No."; 
+                PurchQuoteLine."Requested By" := RGPRequestHeader."Requested By";
+                PurchQuoteLine."Request Date" := RGPRequestHeader."Request Date";
+                PurchQuoteLine."Requested Quantity" := RGPRequestItemLine.Quantity;
 
                 OnBeforeInsertPurchQuoteLine(PurchQuoteLine, PurchQuoteHeader, RGPRequestItemLine, RGPRequestHeader, RGPRequestVendorLine);
                 PurchQuoteLine.Insert(true);

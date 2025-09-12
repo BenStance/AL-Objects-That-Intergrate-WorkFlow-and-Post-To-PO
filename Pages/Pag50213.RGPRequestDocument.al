@@ -1,5 +1,6 @@
 namespace BCEXPERTROAD.BCEXPERTROAD;
 using System.Automation;
+using Microsoft.Purchases.Document;
 
 page 50213 RGPRequestDocument
 {
@@ -8,6 +9,9 @@ page 50213 RGPRequestDocument
     SourceTable = "RGP Request Header";
     ApplicationArea = All;
     UsageCategory = Documents;
+
+    PromotedActionCategories = 'New,Process,Report,Quotes/Orders,Category5,Category6,Category7,Category8,Category9,Category10';
+
 
     layout
     {
@@ -153,9 +157,101 @@ page 50213 RGPRequestDocument
                     end;
                 }
 
+                group(Reports)
+            {
+                Caption = 'Reports';
+                Image = Report;
 
+                action(PrintRGPRequest)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Print RGP Request';
+                    ToolTip = 'Print the RGP Request document';
+                    Image = Print;
+                    Promoted = true;
+                    PromotedCategory = Report;
+                    PromotedIsBig = true;
 
-                group("Approval")
+                    trigger OnAction()
+                    var
+                        RGPRequestReport: Report "RGP Request Document";
+                    begin
+                        RGPRequestReport.InitializeRequest(Rec."Request No.");
+                        RGPRequestReport.Run();
+                    end;
+                }
+            }
+
+            group("Related Document")
+            {
+                Caption = 'Related Document';
+                Image = Document;
+                action(ViewPurchaseQuotes)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Purchase Quotes';
+                    Image = Quote;
+                    ToolTip = 'View Purchase Quotes created from this request.';
+                    Promoted=true;
+                    PromotedCategory=Category4;
+                    PromotedIsBig=true;
+
+                    trigger OnAction()
+                    var
+                        TempPurchHeader: Record "Purchase Header" temporary;
+                        PurchHeader: Record "Purchase Header";
+                    begin
+                        // Find Purchase Headers linked to this Request and of type Quote
+                        PurchHeader.SetRange("RGP Request No.", Rec."Request No.");
+                        PurchHeader.SetRange("Document Type", PurchHeader."Document Type"::Quote);
+
+                        if PurchHeader.FindSet() then
+                            repeat
+                                TempPurchHeader := PurchHeader; // copy values to temporary
+                                TempPurchHeader.Insert();
+                            until PurchHeader.Next() = 0;
+
+                        if TempPurchHeader.IsEmpty() then
+                            Message('No Purchase Quotes found for Request %1.', Rec."Request No.")
+                        else
+                            Page.Run(Page::"Purchase Quotes", TempPurchHeader);
+                    end;
+                }
+
+                action(ViewPurchaseOrders)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Purchase Orders';
+                    Image = Order;
+                    ToolTip = 'View Purchase Orders created from this request.';
+                    Promoted=true;
+                    PromotedCategory=Category4;
+                    PromotedIsBig=true;
+
+                    trigger OnAction()
+                    var
+                        TempPurchHeader: Record "Purchase Header" temporary;
+                        PurchHeader: Record "Purchase Header";
+                    begin
+                        // Find Purchase Headers linked to this Request and of type Order
+                        PurchHeader.SetRange("RGP Request No.", Rec."Request No.");
+                        PurchHeader.SetRange("Document Type", PurchHeader."Document Type"::Order);
+
+                        if PurchHeader.FindSet() then
+                            repeat
+                                TempPurchHeader := PurchHeader;
+                                TempPurchHeader.Insert();
+                            until PurchHeader.Next() = 0;
+
+                        if TempPurchHeader.IsEmpty() then
+                            Message('No Purchase Orders found for Request %1.', Rec."Request No.")
+                        else
+                            Page.Run(Page::"Purchase Orders", TempPurchHeader);
+                    end;
+                }
+            }
+
+            group("Approval")
                 {
                     Caption = 'Approval';
                     Image = Approval;
@@ -208,7 +304,8 @@ page 50213 RGPRequestDocument
                         Caption = 'Convert to Purchase Quote';
                         ToolTip = 'Create a purchase quote from this request for the accepted vendor.';
                         Image = Quote;
-                        Enabled = EnableConvertToQuote;
+                        // Enabled = EnableConvertToQuote;
+                        Enabled=true;
                         Promoted = true;
                         PromotedCategory = Process;
                         PromotedIsBig = true;

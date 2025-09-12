@@ -12,5 +12,6 @@ tableextension 50211 RGPExtPurchaseLine extends "Purchase Line"
             DataClassification = CustomerContent;
             TableRelation = "RGP Request Header"."Request No.";
         }
+        
     }
 }
